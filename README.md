@@ -60,16 +60,6 @@ android {
 <uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
 ```
 
-如不使用 Google 广告 ID，可在宿主 Manifest 中移除 `AD_ID`，并保持 `advertisingId=false`：
-
-```xml
-<uses-permission
-    android:name="com.google.android.gms.permission.AD_ID"
-    tools:node="remove" />
-```
-
-需在 `<manifest>` 上声明 `xmlns:tools="http://schemas.android.com/tools"`。
-
 ### 3. 初始化
 
 Android 侧无需修改 `Application`，也无需在 `onCreate` 中初始化。直接在 Dart 中调用 `AlignappsFlutter.initialize(...)` 即可，参见「初始化与获取 installId」。
