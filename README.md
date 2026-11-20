@@ -64,40 +64,7 @@ android {
 
 Android 侧无需修改 `Application`，也无需在 `onCreate` 中初始化。直接在 Dart 中调用 `AlignappsFlutter.initialize(...)` 即可，参见「初始化与获取 installId」。
 
-### 4. 深链 / App Links
-
-在 `AndroidManifest.xml` 的 `MainActivity` 上添加入口 intent-filter（短链域名或自定义 scheme）：
-
-```xml
-<activity
-    android:name=".MainActivity"
-    android:launchMode="singleTop"
-    android:exported="true">
-    <!-- ...原有 LAUNCHER intent-filter... -->
-
-    <intent-filter android:autoVerify="true">
-        <action android:name="android.intent.action.VIEW" />
-        <category android:name="android.intent.category.DEFAULT" />
-        <category android:name="android.intent.category.BROWSABLE" />
-        <data android:scheme="https" android:host="你的短链域名" />
-    </intent-filter>
-</activity>
-```
-
-- 插件已自动处理冷启动与 `onNewIntent` 收到的深链，无需额外代码。
-- `launchMode` 使用 `singleTop`（Flutter 模板默认已是）。
-- 若由第三方深链库自行处理，可再调用一次 `AlignappsFlutter.handleDeepLink(url)` 兜底。
-- App Links 需在域名根目录发布 `assetlinks.json`。
-
-### 5. 非 Google Play 安装（可选）
-
-无 Install Referrer 的渠道，可在初始化时传入 `installToken`，或在拿到令牌后调用：
-
-```dart
-await AlignappsFlutter.setInstallToken('YOUR_INSTALL_TOKEN');
-```
-
-### 6. 调试与验证
+### 4. 调试与验证
 
 ```bash
 adb logcat -s AlignApps
