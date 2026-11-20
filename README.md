@@ -40,25 +40,28 @@ Android 环境要求：
 - 插件依赖 `GoogleAdsOnDeviceConversion`（3.0.0），并使用静态 framework。
 - 如果手动集成 ODM framework，需要添加 `-ObjC` 和 `-lc++` 链接参数。
 
-## 初始化与埋点
+## 初始化与获取 installId
+
+在 App 启动早期（如 `main()` 中）完成初始化，`initialize` 会返回本次安装的 `installId`：
 
 ```dart
 import 'package:alignapps_flutter/alignapps_flutter.dart';
 
-await AlignappsFlutter.initialize(
+final installId = await AlignappsFlutter.initialize(
   const AlignappsConfig(
     appKey: 'YOUR_APP_KEY',
     serverUrl: 'https://attribution.example.com',
   ),
 );
-
-await AlignappsFlutter.track('register', {'method': 'google'});
-await AlignappsFlutter.trackPurchase(
-  orderId: 'order_1001',
-  revenue: 4.99,
-  currency: 'USD',
-);
 ```
+
+也可以在其他位置单独获取（未初始化时返回 `null`）：
+
+```dart
+final installId = await AlignappsFlutter.getInstallId();
+```
+
+`installId` 在单次安装内保持稳定，可传递给自己的业务服务端用于关联用户与归因数据。
 
 ## ATT / SKAN
 
