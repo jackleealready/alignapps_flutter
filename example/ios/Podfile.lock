@@ -1,0 +1,58 @@
+PODS:
+  - alignapps_flutter (0.3.0):
+    - Flutter
+    - GoogleAdsOnDeviceConversion (= 3.0.0)
+  - Flutter (1.0.0)
+  - GoogleAdsOnDeviceConversion (3.0.0):
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Logger (~> 8.1)
+    - GoogleUtilities/Network (~> 8.1)
+    - nanopb (~> 3.30910.0)
+  - GoogleUtilities/Environment (8.1.5):
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Logger (8.1.5):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Network (8.1.5):
+    - GoogleUtilities/Logger
+    - "GoogleUtilities/NSData+zlib"
+    - GoogleUtilities/Privacy
+    - GoogleUtilities/Reachability
+  - "GoogleUtilities/NSData+zlib (8.1.5)":
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Privacy (8.1.5)
+  - GoogleUtilities/Reachability (8.1.5):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
+  - nanopb (3.30910.0):
+    - nanopb/decode (= 3.30910.0)
+    - nanopb/encode (= 3.30910.0)
+  - nanopb/decode (3.30910.0)
+  - nanopb/encode (3.30910.0)
+
+DEPENDENCIES:
+  - alignapps_flutter (from `.symlinks/plugins/alignapps_flutter/ios`)
+  - Flutter (from `Flutter`)
+
+SPEC REPOS:
+  trunk:
+    - GoogleAdsOnDeviceConversion
+    - GoogleUtilities
+    - nanopb
+
+EXTERNAL SOURCES:
+  alignapps_flutter:
+    :path: ".symlinks/plugins/alignapps_flutter/ios"
+  Flutter:
+    :path: Flutter
+
+SPEC CHECKSUMS:
+  alignapps_flutter: 880948a5993f839f71f060ce46275fadcdb99db1
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  GoogleAdsOnDeviceConversion: b4fcc557983271d53177d75ddf704c025791d261
+  GoogleUtilities: 7dc09b3fa9ecb5c2298b952313d14628b61b9da3
+  nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+
+PODFILE CHECKSUM: 53a6aebc29ccee84c41f92f409fc20cd4ca011f1
+
+COCOAPODS: 1.16.2

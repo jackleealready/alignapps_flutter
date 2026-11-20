@@ -1,0 +1,44 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+build/
+**/build/
+doc/api/
+
+# Android
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+captures/
+.cxx/
+.externalNativeBuild/
+*.iml
+*.keystore
+*.jks
+key.properties
+
+# iOS
+Pods/
+**/Pods/
+.symlinks/
+**/.symlinks/
+DerivedData/
+**/DerivedData/
+*.xcuserstate
+xcuserdata/
+**/xcuserdata/
+Flutter/Generated.xcconfig
+Flutter/ephemeral/
+Flutter/flutter_export_environment.sh
+Flutter/Flutter.podspec
+Runner/GeneratedPluginRegistrant.*
+**/GeneratedPluginRegistrant.java
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store

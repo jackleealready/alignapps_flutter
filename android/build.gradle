@@ -1,0 +1,52 @@
+group = "com.alignapps.flutter"
+version = "0.3.0"
+
+buildscript {
+    ext.kotlin_version = "2.2.21"
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+android {
+    namespace = "com.alignapps.flutter"
+    compileSdk = 36
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    defaultConfig {
+        minSdk = 23
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation files("libs/alignapps-sdk-release.aar")
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "com.android.installreferrer:installreferrer:2.2"
+    implementation "com.google.android.gms:play-services-ads-identifier:18.1.0"
+    implementation "com.google.android.gms:play-services-appset:16.1.0"
+}
