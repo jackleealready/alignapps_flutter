@@ -4,7 +4,7 @@ import Foundation
 import UIKit
 
 struct AlignappsDevice {
-    static let sdkVersion = "0.3.0"
+    static let sdkVersion = "0.3.1"
 
     static func attStatus() -> String {
         if #available(iOS 14, *) {

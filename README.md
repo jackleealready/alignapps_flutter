@@ -4,7 +4,7 @@ Flutter bridge for the AlignApps attribution SDK. Supports Android and iOS.
 
 ## Platform support
 
-- Android: bundles the native AlignApps Android SDK as `android/libs/alignapps-sdk-release.aar`.
+- Android: bundles the native AlignApps Android SDK as `android/libs/alignapps-sdk.jar`.
 - iOS: includes a native Swift implementation in `ios/Classes`.
 - iOS 14.5+.
 - iOS uses IDFV, IDFA (after ATT authorization), SKAdNetwork and Google On-device Conversion Measurement (`GoogleAdsOnDeviceConversion`).
@@ -18,7 +18,7 @@ dependencies:
   alignapps_flutter:
     git:
       url: https://github.com/jackleealready/alignapps_flutter.git
-      ref: v0.3.0
+      ref: v0.3.1
 ```
 
 Then run:

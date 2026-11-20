@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 - 2026-11-20
+
+- Bundle the Android SDK classes in `android/libs/alignapps-sdk.jar` so the plugin can be consumed as a Git dependency without any Maven repository.
+- Merge the SDK required permissions into the plugin manifest and embed its consumer ProGuard rules.
+
 ## 0.3.0 - 2026-11-17
 
 - Added iOS native implementation of the AlignApps attribution core.
