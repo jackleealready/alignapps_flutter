@@ -28,10 +28,92 @@ flutter pub get
 cd ios && LANG=en_US.UTF-8 pod install --repo-update
 ```
 
-Android 环境要求：
+## Android 对接流程
+
+### 1. 环境要求
 
 - `compileSdk = 36`、`minSdk >= 23`、JDK 17。
-- 原生 SDK 已随插件内置，无需任何 Maven 仓库；仅需默认的 `google()` 与 `mavenCentral()`。
+- 原生 SDK 已随插件内置（`android/libs/alignapps-sdk.jar`），无需任何 Maven 仓库，仅需默认的 `google()` 与 `mavenCentral()`。
+
+在 `android/app/build.gradle.kts` 中确认（Flutter 模板通常已满足，若版本偏低需改大）：
+
+```kotlin
+android {
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 23
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+```
+
+### 2. 权限
+
+插件已自动合并以下权限，无需手动添加：
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+<uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
+```
+
+如不使用 Google 广告 ID，可在宿主 Manifest 中移除 `AD_ID`，并保持 `advertisingId=false`：
+
+```xml
+<uses-permission
+    android:name="com.google.android.gms.permission.AD_ID"
+    tools:node="remove" />
+```
+
+需在 `<manifest>` 上声明 `xmlns:tools="http://schemas.android.com/tools"`。
+
+### 3. 初始化
+
+Android 侧无需修改 `Application`，也无需在 `onCreate` 中初始化。直接在 Dart 中调用 `AlignappsFlutter.initialize(...)` 即可，参见「初始化与获取 installId」。
+
+### 4. 深链 / App Links
+
+在 `AndroidManifest.xml` 的 `MainActivity` 上添加入口 intent-filter（短链域名或自定义 scheme）：
+
+```xml
+<activity
+    android:name=".MainActivity"
+    android:launchMode="singleTop"
+    android:exported="true">
+    <!-- ...原有 LAUNCHER intent-filter... -->
+
+    <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="你的短链域名" />
+    </intent-filter>
+</activity>
+```
+
+- 插件已自动处理冷启动与 `onNewIntent` 收到的深链，无需额外代码。
+- `launchMode` 使用 `singleTop`（Flutter 模板默认已是）。
+- 若由第三方深链库自行处理，可再调用一次 `AlignappsFlutter.handleDeepLink(url)` 兜底。
+- App Links 需在域名根目录发布 `assetlinks.json`。
+
+### 5. 非 Google Play 安装（可选）
+
+无 Install Referrer 的渠道，可在初始化时传入 `installToken`，或在拿到令牌后调用：
+
+```dart
+await AlignappsFlutter.setInstallToken('YOUR_INSTALL_TOKEN');
+```
+
+### 6. 调试与验证
+
+```bash
+adb logcat -s AlignApps
+```
+
+Release 包已内置消费者混淆规则，无需额外 ProGuard / R8 配置。
 
 ## iOS 配置要求
 
