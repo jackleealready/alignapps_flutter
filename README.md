@@ -4,132 +4,162 @@ AlignApps 归因 SDK 的 Flutter 桥接插件，支持 Android 与 iOS。
 
 ## 平台支持
 
-- Android：已内置 AlignApps 原生 Android SDK，位于 `android/libs/alignapps-sdk.jar`。
-- iOS：`ios/Classes` 内含原生 Swift 实现。
-- iOS 14.5+。
-- iOS 使用 IDFV、IDFA（取得 ATT 授权后）、SKAdNetwork 以及 Google 设备端转化衡量（`GoogleAdsOnDeviceConversion`）。
+- Android：内置 AlignApps 原生 Android SDK（`android/libs/alignapps-sdk.jar`）。
+- iOS：`ios/Classes` 内含原生 Swift 实现，iOS 14.5+。
+- iOS 使用 IDFV、IDFA（ATT 授权后）、SKAdNetwork、Google ODM；ATT 拒绝时用 Meta `anon_id` 提升匹配。
 
-## 安装接入
-
-以 git 依赖方式引入插件：
+## 安装
 
 ```yaml
 dependencies:
   alignapps_flutter:
     git:
       url: https://github.com/jackleealready/alignapps_flutter.git
-      ref: v0.3.1
+      ref: v0.3.2
+  # 仅 iOS 用到（Android 不会调用，也不会初始化）
+  app_tracking_transparency: ^2.0.7   # 请求 ATT
+  facebook_app_events: ^0.34.0        # 只取 Meta anon_id
 ```
-
-然后执行：
 
 ```bash
 flutter pub get
 cd ios && LANG=en_US.UTF-8 pod install --repo-update
 ```
 
-## Android 对接流程
+## 一条统一初始化方法（直接复制）
 
-### 1. 环境要求
+Android 和 iOS 的差异都封装在这个方法里，接入方只需要调用 `initAlignApps()`：
 
-- `compileSdk = 36`、`minSdk >= 23`、JDK 17。
-- 原生 SDK 已随插件内置（`android/libs/alignapps-sdk.jar`），无需任何 Maven 仓库，仅需默认的 `google()` 与 `mavenCentral()`。
+```dart
+import 'dart:async';
+import 'dart:io';
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'package:facebook_app_events/facebook_app_events.dart';
+import 'package:alignapps_flutter/alignapps_flutter.dart';
 
-在 `android/app/build.gradle.kts` 中确认（Flutter 模板通常已满足，若版本偏低需改大）：
+/// Android / iOS 共用，内部自动处理平台差异与 anon_id 重试。
+Future<void> initAlignApps({
+  /// anon_id 缺失时每 3 秒重试一次。
+  Duration retryInterval = const Duration(seconds: 3),
+  int maxRetries = 10,
+}) async {
+  String? metaAnonId;
 
-```kotlin
-android {
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 23
+  if (Platform.isIOS) {
+    // 1) ATT 必须在初始化 AlignApps 之前。
+    await AppTrackingTransparency.requestTrackingAuthorization();
+
+    // 2) 只拿 anon_id，不上报事件、不采集 IDFA。
+    final fb = FacebookAppEvents();
+    await fb.setAutoLogAppEventsEnabled(false);
+    await fb.setAdvertiserIdCollectionEnabled(false);
+    await fb.initializeSdk();
+    metaAnonId = await _readAnonId(fb);
+  }
+
+  // 3) 初始化 AlignApps（Android 到这就结束）。
+  await AlignappsFlutter.initialize(
+    AlignappsConfig(
+      appKey: 'YOUR_APP_KEY',
+      serverUrl: 'https://attribution.example.com',
+      metaAnonId: metaAnonId,
+      initialConsent: const AlignappsConsent(
+        analytics: true,
+        advertisingId: true,
+      ),
+    ),
+  );
+
+  // 4) 初始化时没拿到：每 3 秒重试，拿到后补传（不阻塞 install）。
+  if (Platform.isIOS && metaAnonId == null) {
+    unawaited(_retryMetaAnonId(retryInterval, maxRetries));
+  }
+}
+
+Future<String?> _readAnonId(FacebookAppEvents fb) async {
+  final id = await fb.getAnonymousId();
+  return (id == null || id.isEmpty) ? null : id;
+}
+
+Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
+  final fb = FacebookAppEvents();
+  for (var i = 0; i < maxRetries; i++) {
+    await Future.delayed(interval);
+    final id = await _readAnonId(fb);
+    if (id != null) {
+      await AlignappsFlutter.setMetaAnonId(id);
+      return;
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
+  }
 }
 ```
 
-### 2. 权限
+> 默认总是采集 `anon_id`：投不投 Meta 会变，采集本身没有副作用，这样不用为了开关反复发版。接入方只调 `initAlignApps()` 即可。
 
-插件已自动合并以下权限，无需手动添加：
+## Android 额外配置
+
+环境：`compileSdk = 36`、`minSdk >= 23`、JDK 17。
+
+权限已由插件自动合并，无需手动添加。调试：`adb logcat -s AlignApps`。
+
+## iOS 额外配置（Info.plist）
 
 ```xml
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="com.google.android.gms.permission.AD_ID" />
-<uses-permission android:name="com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE" />
+<key>NSUserTrackingUsageDescription</key>
+<string>此标识用于广告归因和投放效果分析。</string>
+
+<key>SKAdNetworkItems</key>
+<array>
+  <dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict> <!-- Google -->
+  <dict><key>SKAdNetworkIdentifier</key><string>v9wttpbfk9.skadnetwork</string></dict> <!-- Meta -->
+</array>
+
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array><string>fb[APP_ID]</string></array>
+  </dict>
+</array>
+<key>FacebookAppID</key>
+<string>[APP_ID]</string>
+<key>FacebookClientToken</key>
+<string>[CLIENT_TOKEN]</string>
+<key>FacebookDisplayName</key>
+<string>[APP_NAME]</string>
 ```
 
-### 3. 初始化
+- `[APP_ID]`、`[CLIENT_TOKEN]` 在 Meta for Developers 后台获取。
+- Google ODM 已由插件自动集成，**无需额外操作**。
 
-Android 侧无需修改 `Application`，也无需在 `onCreate` 中初始化。直接在 Dart 中调用 `AlignappsFlutter.initialize(...)` 即可，参见「初始化与获取 installId」。
+## 把 installId 传给业务服务端
 
-### 4. 调试与验证
-
-```bash
-adb logcat -s AlignApps
-```
-
-Release 包已内置消费者混淆规则，无需额外 ProGuard / R8 配置。
-
-## iOS 配置要求
-
-- 宿主 App 的 `Info.plist` 必须包含 `NSUserTrackingUsageDescription`。
-- 在 `SKAdNetworkItems` 中加入 Meta 与 Google 的 SKAdNetwork 标识。
-- 插件依赖 `GoogleAdsOnDeviceConversion`（3.0.0），并使用静态 framework。
-- 如果手动集成 ODM framework，需要添加 `-ObjC` 和 `-lc++` 链接参数。
-
-## 初始化与获取 installId
-
-在 App 启动早期（如 `main()` 中）完成初始化，`initialize` 会返回本次安装的 `installId`：
-
-```dart
-import 'package:alignapps_flutter/alignapps_flutter.dart';
-
-final installId = await AlignappsFlutter.initialize(
-  const AlignappsConfig(
-    appKey: 'YOUR_APP_KEY',
-    serverUrl: 'https://attribution.example.com',
-  ),
-);
-```
-
-也可以在其他位置单独获取（未初始化时返回 `null`）：
+注册、充值等业务事件由你的应用服务端上报，客户端只需要把 `installId` 交给服务端关联：
 
 ```dart
 final installId = await AlignappsFlutter.getInstallId();
+// 传给业务服务端，服务端上报 register / purchase 时带上 install_id
 ```
 
-`installId` 在单次安装内保持稳定，可传递给自己的业务服务端用于关联用户与归因数据。
+> 客户端不需要调用 `track` / `trackPurchase`；安装事件由 SDK 初始化时自动上报。
 
-## ATT / SKAN
+## SKAN（iOS，自动）
 
-```dart
-// 在引导流程允许的时机弹出 ATT 授权弹窗。
-await AlignappsFlutter.requestTrackingAuthorization();
-final status = await AlignappsFlutter.getAttStatus();
+安装时的 SKAN 转化值由 SDK 自动更新（`install = 1 / low`），无需手动调用。
 
-// 手动更新转化值（默认已开启自动映射）。
-await AlignappsFlutter.updateSkanConversionValue(3, 'high', true);
+## 常见问题
 
-// 可选的 SKAN 4 更新回调。
-AlignappsFlutter.setSkanUpdatedCallback((data) {
-  // {conversion_value, coarse_value, lock_window}
-});
-```
+**Q：FacebookAppID 会变怎么办？**
+它只在接入方自己的 `Info.plist` 里，AlignApps 不写死。换 Meta App 时改 `FacebookAppID` / `FacebookClientToken` / `fb[APP_ID]` 即可，Dart 代码不用动；`anon_id` 读取逻辑自动适配。
 
-默认 SKAN 转化值映射：
+**Q：可以只拿 anon_id、不让 Facebook 上报事件吗？**
+可以。方法里已经：
+- `setAutoLogAppEventsEnabled(false)`：关闭 Meta 自动事件上报；
+- `setAdvertiserIdCollectionEnabled(false)`：不让 FBSDK 采集 IDFA。
+事件统一由 AlignApps 上送。注意 FBSDK 初始化本身仍会初始化 SDK，但不会记录 app 事件。
 
-```text
-install = 1 / low
-register = 2 / medium
-purchase = 3 / high
-```
+**Q：以后不投 Meta 了怎么办？**
+不用改代码。`anon_id` 会一直采集，但不投 Meta 时平台不会用到它，没有副作用；如果某天想彻底移除 Meta SDK，再删掉 iOS 那段和对应依赖即可。
 
-## Google ODM
-
-iOS 插件会在首次启动时调用 `GoogleAdsOnDeviceConversion` 并缓存 `odm_info`，以 `google_odm_info` 字段附加到事件上，供 AlignApps 服务端向 Google App Conversion API 回传使用。
-
-## Firebase / GA4
-
-Firebase Analytics 为可选项，AlignApps 归因不依赖它。若同时使用，请把同样的业务事件也记录到 GA4，并将 GA4 关联到 Google Ads，以便 Google 获得优化信号。归因来源仍以 AlignApps 的 Google App Conversion API 为准，避免重复归因。
+**Q：需要接 Firebase / GA4 吗？**
+不需要，与 AlignApps 归因无关。

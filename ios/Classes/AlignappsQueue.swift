@@ -134,7 +134,8 @@ final class AlignappsUploader {
         idfa: String?,
         idfv: String?,
         attStatus: String?,
-        lat: Bool?
+        lat: Bool?,
+        metaAnonId: String?
     ) {
         guard let url = URL(string: config.serverUrl + "/api/v1/sdk/install-attributions/refresh") else {
             return
@@ -148,6 +149,7 @@ final class AlignappsUploader {
         if let idfv, !idfv.isEmpty { payload["idfv"] = idfv }
         if let attStatus, !attStatus.isEmpty { payload["att_status"] = attStatus }
         if let lat { payload["lat"] = lat }
+        if let metaAnonId, !metaAnonId.isEmpty { payload["meta_anon_id"] = metaAnonId }
         guard let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
 
         var request = URLRequest(url: url)

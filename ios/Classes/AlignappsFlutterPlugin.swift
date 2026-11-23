@@ -61,6 +61,13 @@ public final class AlignappsFlutterPlugin: NSObject, FlutterPlugin {
             }
             core.setInstallToken(token)
             result(nil)
+        case "setMetaAnonId":
+            guard let core else { return result(fluttered("not_initialized", "AlignApps is not initialized")) }
+            guard let anonId = (call.arguments as? [String: Any])?["anonId"] as? String, !anonId.isEmpty else {
+                return result(fluttered("invalid_arguments", "anonId must not be blank"))
+            }
+            core.setMetaAnonId(anonId)
+            result(nil)
         case "handleDeepLink":
             guard let core else { return result(fluttered("not_initialized", "AlignApps is not initialized")) }
             guard let url = (call.arguments as? [String: Any])?["url"] as? String, !url.isEmpty else {

@@ -2,6 +2,8 @@
 
 ## 0.3.2 - 2026-11-23
 
+- Flutter: 新增 `AlignappsConfig.metaAnonId` 与 `AlignappsFlutter.setMetaAnonId()`，用于把 Meta App Events SDK 的 `anon_id` 随事件上送（ATT 拒绝下的 Meta 匹配信号）。
+- iOS: 事件会携带 `meta_anon_id`，并通过 install refresh 接口更新服务端已有的安装归因。
 - iOS: click parameters are recorded as `CLICK_MATCH` instead of `SAN`.
 - iOS: non-install events wait for install attribution (`PENDING_ATTRIBUTION`) and are backfilled.
 - iOS: Google App Conversion adds `gclid_only_request`, real consent (`ad_user_data`/`ad_personalization`/`eea`), OS build in User-Agent, and channel-based cross-network decision.

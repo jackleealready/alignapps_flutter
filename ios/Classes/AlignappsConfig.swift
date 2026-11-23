@@ -50,6 +50,7 @@ struct AlignappsConfig {
     var debug: Bool = false
     var initialConsent = AlignappsConsent()
     var installToken: String?
+    var metaAnonId: String?
     var enableSkan: Bool = true
     var enableOdm: Bool = true
     var skanConversionValues: [String: Int] = [
@@ -78,6 +79,7 @@ struct AlignappsConfig {
         config.debug = args["debug"] as? Bool ?? false
         config.initialConsent = AlignappsConsent.from(args["initialConsent"] as? [String: Any])
         config.installToken = args["installToken"] as? String
+        config.metaAnonId = args["metaAnonId"] as? String
         config.enableSkan = args["enableSkan"] as? Bool ?? true
         config.enableOdm = args["enableOdm"] as? Bool ?? true
         if let values = args["skanConversionValues"] as? [String: Any] {

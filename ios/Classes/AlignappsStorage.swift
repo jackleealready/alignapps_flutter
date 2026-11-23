@@ -14,6 +14,7 @@ final class AlignappsStorage {
         static let consent = "com.alignapps.consent"
         static let queue = "com.alignapps.eventQueue"
         static let googleOdmInfo = "com.alignapps.googleOdmInfo"
+        static let metaAnonId = "com.alignapps.metaAnonId"
         static let firstLaunchAt = "com.alignapps.firstLaunchAt"
         static let skanConversionValue = "com.alignapps.skanConversionValue"
     }
@@ -78,6 +79,11 @@ final class AlignappsStorage {
     var googleOdmInfo: String? {
         get { defaults.string(forKey: Keys.googleOdmInfo) }
         set { defaults.set(newValue, forKey: Keys.googleOdmInfo) }
+    }
+
+    var metaAnonId: String? {
+        get { defaults.string(forKey: Keys.metaAnonId) }
+        set { defaults.set(newValue, forKey: Keys.metaAnonId) }
     }
 
     var firstLaunchAt: TimeInterval {
