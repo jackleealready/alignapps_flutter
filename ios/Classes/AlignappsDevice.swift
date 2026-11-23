@@ -1,10 +1,11 @@
 import AdSupport
 import AppTrackingTransparency
+import Darwin
 import Foundation
 import UIKit
 
 struct AlignappsDevice {
-    static let sdkVersion = "0.3.1"
+    static let sdkVersion = "0.3.2"
 
     static func attStatus() -> String {
         if #available(iOS 14, *) {
@@ -43,6 +44,7 @@ struct AlignappsDevice {
             "app_version": version,
             "app_build": build,
             "os_version": UIDevice.current.systemVersion,
+            "os_build": osBuild() ?? "",
             "manufacturer": "Apple",
             "model": machineName(),
             "locale": locale,
@@ -69,6 +71,19 @@ struct AlignappsDevice {
             return Locale.current.region?.identifier
         }
         return Locale.current.regionCode
+    }
+
+    private static func osBuild() -> String? {
+        var size = 0
+        guard sysctlbyname("kern.osversion", nil, &size, nil, 0) == 0, size > 0 else {
+            return nil
+        }
+        var buffer = [CChar](repeating: 0, count: size)
+        guard sysctlbyname("kern.osversion", &buffer, &size, nil, 0) == 0 else {
+            return nil
+        }
+        let value = String(cString: buffer).trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
     }
 
     private static func machineName() -> String {

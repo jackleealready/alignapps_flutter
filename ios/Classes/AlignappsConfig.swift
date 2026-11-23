@@ -1,19 +1,39 @@
 import Foundation
 
 struct AlignappsConsent {
-    var analytics: Bool = true
-    var advertisingId: Bool = true
+    var analytics: Bool = false
+    var advertisingId: Bool = false
+    var adUserData: Bool? = nil
+    var adPersonalization: Bool? = nil
+    var eea: Bool? = nil
 
     static func from(_ value: [String: Any]?) -> AlignappsConsent {
         let map = value ?? [:]
         return AlignappsConsent(
-            analytics: map["analytics"] as? Bool ?? true,
-            advertisingId: map["advertisingId"] as? Bool ?? true
+            analytics: map["analytics"] as? Bool ?? false,
+            advertisingId: map["advertisingId"] as? Bool ?? false,
+            adUserData: map["adUserData"] as? Bool,
+            adPersonalization: map["adPersonalization"] as? Bool,
+            eea: map["eea"] as? Bool
         )
     }
 
     func toMap() -> [String: Any] {
-        ["analytics": analytics, "advertisingId": advertisingId]
+        var map: [String: Any] = ["analytics": analytics, "advertisingId": advertisingId]
+        if let adUserData { map["adUserData"] = adUserData }
+        if let adPersonalization { map["adPersonalization"] = adPersonalization }
+        if let eea { map["eea"] = eea }
+        return map
+    }
+
+    func toAdConsentMap() -> [String: Any] {
+        // ATT is tracked separately. These values come from business consent only.
+        var map: [String: Any] = [
+            "ad_user_data": adUserData ?? (analytics && advertisingId),
+            "ad_personalization": adPersonalization ?? advertisingId
+        ]
+        if let eea { map["eea"] = eea }
+        return map
     }
 }
 

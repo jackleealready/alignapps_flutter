@@ -128,6 +128,39 @@ final class AlignappsUploader {
             }
         }.resume()
     }
+
+    func refreshInstallDevice(
+        installId: String,
+        idfa: String?,
+        idfv: String?,
+        attStatus: String?,
+        lat: Bool?
+    ) {
+        guard let url = URL(string: config.serverUrl + "/api/v1/sdk/install-attributions/refresh") else {
+            return
+        }
+        var payload: [String: Any] = [
+            "app_key": config.appKey,
+            "install_id": installId,
+            "platform": "ios"
+        ]
+        if let idfa, !idfa.isEmpty { payload["idfa"] = idfa }
+        if let idfv, !idfv.isEmpty { payload["idfv"] = idfv }
+        if let attStatus, !attStatus.isEmpty { payload["att_status"] = attStatus }
+        if let lat { payload["lat"] = lat }
+        guard let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = data
+        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.setValue(config.appKey, forHTTPHeaderField: "X-App-Key")
+        request.setValue(AlignappsDevice.sdkVersion, forHTTPHeaderField: "X-SDK-Version")
+        request.setValue("ios", forHTTPHeaderField: "X-Platform")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("AlignApps-iOS/\(AlignappsDevice.sdkVersion)", forHTTPHeaderField: "User-Agent")
+        session.dataTask(with: request) { _, _, _ in }.resume()
+    }
 }
 
 enum AlignappsTime {

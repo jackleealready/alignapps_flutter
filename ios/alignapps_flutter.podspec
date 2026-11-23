@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'alignapps_flutter'
-  s.version          = '0.3.1'
+  s.version          = '0.3.2'
   s.summary          = 'AlignApps attribution bridge for Flutter.'
   s.description      = 'Flutter bridge for the AlignApps attribution SDK.'
   s.homepage         = 'https://github.com/alignapps/alignapps-sdk-android'

@@ -11,6 +11,7 @@ final class AlignappsCore {
     private let skan: AlignappsSkan
     private let odm: AlignappsOdm
     private let lock = NSLock()
+    private let odmFlushLock = NSLock()
 
     private var initialized = false
     private var flushing = false
@@ -75,6 +76,19 @@ final class AlignappsCore {
         initialized = true
         logger.info("AlignApps initialized installId=\(installId)")
         if config.enableOdm {
+            var odmFlushed = false
+            let finishOdm = { [weak self] in
+                guard let self else { return }
+                self.odmFlushLock.lock()
+                if odmFlushed {
+                    self.odmFlushLock.unlock()
+                    return
+                }
+                odmFlushed = true
+                self.odmFlushLock.unlock()
+                // Avoid re-entering the main lock when ODM info is already cached.
+                DispatchQueue.main.async { self.flush() }
+            }
             odm.fetchIfNeeded { [weak self] info in
                 guard let self else { return }
                 if let info, let eventId = self.storage.installEventId {
@@ -82,11 +96,9 @@ final class AlignappsCore {
                         event["google_odm_info"] = info
                     }
                 }
-                self.flush()
+                finishOdm()
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-                self?.flush()
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8) { finishOdm() }
         } else {
             flush()
         }
@@ -299,9 +311,19 @@ final class AlignappsCore {
 
     private func refreshIdfa() {
         let device = AlignappsDevice.snapshot(consent: storage.consent)
-        guard let installId = storage.installEventId else { return }
-        queue.update(eventId: installId) { event in
-            event["device"] = device
+        if let installEventId = storage.installEventId, queue.installEvent() != nil {
+            queue.update(eventId: installEventId) { event in
+                event["device"] = device
+            }
+        }
+        if storage.consent.analytics {
+            uploader.refreshInstallDevice(
+                installId: storage.installId,
+                idfa: device["idfa"] as? String,
+                idfv: device["idfv"] as? String,
+                attStatus: device["att_status"] as? String,
+                lat: device["lat"] as? Bool
+            )
         }
     }
 
@@ -355,6 +377,10 @@ final class AlignappsCore {
         }
         if let odm = storage.googleOdmInfo, !odm.isEmpty {
             event["google_odm_info"] = odm
+        }
+        let adConsent = storage.consent.toAdConsentMap()
+        if !adConsent.isEmpty {
+            event["consent"] = adConsent
         }
         return event
     }

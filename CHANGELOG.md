@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.2 - 2026-11-23
+
+- iOS: click parameters are recorded as `CLICK_MATCH` instead of `SAN`.
+- iOS: non-install events wait for install attribution (`PENDING_ATTRIBUTION`) and are backfilled.
+- iOS: Google App Conversion adds `gclid_only_request`, real consent (`ad_user_data`/`ad_personalization`/`eea`), OS build in User-Agent, and channel-based cross-network decision.
+- iOS: ODM waits before first flush; ATT authorization refreshes server-side IDFA.
+- iOS: Privacy Manifest declares advertising data, product interaction, purchase history and other usage data.
+- Flutter: `AlignappsConsent` supports optional `adUserData`, `adPersonalization` and `eea`.
+
 ## 0.3.1 - 2026-11-20
 
 - Bundle the Android SDK classes in `android/libs/alignapps-sdk.jar` so the plugin can be consumed as a Git dependency without any Maven repository.

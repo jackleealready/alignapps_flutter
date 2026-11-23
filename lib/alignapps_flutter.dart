@@ -6,15 +6,24 @@ class AlignappsConsent {
   const AlignappsConsent({
     this.analytics = true,
     this.advertisingId = true,
+    this.adUserData,
+    this.adPersonalization,
+    this.eea,
   });
 
   final bool analytics;
   final bool advertisingId;
+  final bool? adUserData;
+  final bool? adPersonalization;
+  final bool? eea;
 
   Map<String, Object?> toMap() {
     return <String, Object?>{
       'analytics': analytics,
       'advertisingId': advertisingId,
+      if (adUserData != null) 'adUserData': adUserData,
+      if (adPersonalization != null) 'adPersonalization': adPersonalization,
+      if (eea != null) 'eea': eea,
     };
   }
 
@@ -22,6 +31,9 @@ class AlignappsConsent {
     return AlignappsConsent(
       analytics: map['analytics'] as bool? ?? true,
       advertisingId: map['advertisingId'] as bool? ?? true,
+      adUserData: map['adUserData'] as bool?,
+      adPersonalization: map['adPersonalization'] as bool?,
+      eea: map['eea'] as bool?,
     );
   }
 }
