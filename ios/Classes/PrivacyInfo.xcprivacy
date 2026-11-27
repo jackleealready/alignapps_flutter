@@ -2,11 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!--
+      Generated file. Do not edit by hand.
+
+      `ios/inject_privacy_domain.sh` regenerates this manifest during the Xcode
+      build from `ios/PrivacyInfo.xcprivacy.template`, filling in the host's
+      dedicated attribution domain. This committed copy is only a safe fallback
+      (tracking disabled, no tracking domains); a normal iOS build replaces it
+      with NSPrivacyTracking=true and NSPrivacyTrackingDomains=[attribution host].
+    -->
     <key>NSPrivacyTracking</key>
-    <true/>
-    <!-- NSPrivacyTrackingDomains is intentionally omitted: serverUrl is per merchant.
-         Each host app must declare its own tracking domain in the app-level manifest.
-         See ios/PrivacyInfo.host-app.xcprivacy.template. -->
+    <false/>
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
         <dict>

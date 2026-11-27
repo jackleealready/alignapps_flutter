@@ -8,27 +8,119 @@ AlignApps 归因 SDK 的 Flutter 桥接插件，支持 Android 与 iOS。
 - iOS：`ios/Classes` 内含原生 Swift 实现，iOS 14.5+。
 - iOS 使用 IDFV、IDFA（ATT 授权后）、SKAdNetwork、Google ODM；ATT 拒绝时用 Meta `anon_id` 提升匹配。
 
-## 安装
+## 准备内容
+
+### 通用
+
+- 在 AlignApps 后台创建应用，拿到 `appKey`。
+- 确定归因上报地址 `serverUrl`。
+
+### iOS
+
+- Xcode + CocoaPods；最低 iOS 14.5。
+- **2 个独立归因域名**（主/备，例如 `app.yourdomain.com`、`in.yourdomain.com`），都代理到 SDK 默认域名 `alignapps.win4me.vip`，且不能用于业务。
+- 确定主归因域名，第三步会写入 `ios/Flutter/AlignappsPrivacyDomain.txt`。
+- 准备 `Info.plist` 配置：ATT 说明、SKAdNetwork、Meta URL Scheme。
+- 如果用 Meta：Meta App ID、Client Token（Meta for Developers 后台获取）。
+- App Store Connect 的 App 记录和隐私信息（上架时用）。
+
+### Android
+
+- Android Studio / Gradle；`compileSdk = 36`、`minSdk >= 23`、JDK 17。
+- Android 应用包名和签名。
+- 不需要额外归因域名或隐私清单；`serverUrl` 可直接用 SDK 默认域名 `https://alignapps.win4me.vip`，或你自己的归因反代域名。
+- Google ODM 由插件自动集成，无需额外准备。
+
+## 接入流程
+
+### 第一步：添加依赖
+
+`pubspec.yaml`：
 
 ```yaml
 dependencies:
   alignapps_flutter:
     git:
       url: https://github.com/jackleealready/alignapps_flutter.git
-      ref: v0.4.0
-  # 仅 iOS 用到（Android 不会调用，也不会初始化）
+      ref: v0.5.0
+
+  # 仅 iOS 需要（Android 不会调用）
   app_tracking_transparency: ^2.0.7   # 请求 ATT
   facebook_app_events: ^0.34.0        # 只取 Meta anon_id
 ```
+
+### 第二步：平台额外配置
+
+#### iOS
+
+在 `ios/Runner/Info.plist` 添加：
+
+```xml
+<key>NSUserTrackingUsageDescription</key>
+<string>此标识用于广告归因和投放效果分析。</string>
+
+<key>SKAdNetworkItems</key>
+<array>
+  <dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict> <!-- Google -->
+  <dict><key>SKAdNetworkIdentifier</key><string>v9wttpbfk9.skadnetwork</string></dict> <!-- Meta -->
+</array>
+
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array><string>fb[APP_ID]</string></array>
+  </dict>
+</array>
+<key>FacebookAppID</key>
+<string>[APP_ID]</string>
+<key>FacebookClientToken</key>
+<string>[CLIENT_TOKEN]</string>
+<key>FacebookDisplayName</key>
+<string>[APP_NAME]</string>
+```
+
+- `[APP_ID]`、`[CLIENT_TOKEN]` 在 Meta for Developers 后台获取。
+- Google ODM 已由插件自动集成，无需额外操作。
+
+#### Android
+
+- `compileSdk = 36`、`minSdk >= 23`、JDK 17。
+- 权限已由插件自动合并，无需手动添加。
+- 调试：`adb logcat -s AlignApps`。
+
+### 第三步：iOS 额外域名与隐私配置（仅 iOS）
+
+准备 **2 个独立域名**，都代理到 SDK 默认域名（例如 `alignapps.win4me.vip`），且**都不能用于业务**：
+
+- 主域：`app.<你的域名>`，例如 `app.roadhouse.vezu.cc`
+- 备域：`in.<你的域名>`，例如 `in.roadhouse.vezu.cc`
+
+前缀可参考 Adjust。两个域名都不能和业务 API 同域。
+
+创建 `ios/Flutter/AlignappsPrivacyDomain.txt`，写入主域（只写 host）：
+
+```text
+app.roadhouse.vezu.cc
+```
+
+也可以设置 `ALIGNAPPS_TRACKING_DOMAIN=app.roadhouse.vezu.cc`。
+
+构建时脚本会自动把主域注入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy`，不需要手写 App 隐私清单。缺少该文件时 iOS 构建会直接失败。
+
+> Android 跳过这一步；如果只做 Android，第五步的 `serverUrl` 直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
+
+### 第四步：安装依赖
 
 ```bash
 flutter pub get
 cd ios && LANG=en_US.UTF-8 pod install --repo-update
 ```
 
-## 一条统一初始化方法（直接复制）
+- Android 只需要执行 `flutter pub get`。
+- iOS 必须重新 `pod install`，否则不会注册隐私域名注入脚本。
 
-Android 和 iOS 的差异都封装在这个方法里，接入方只需要调用 `initAlignApps()`：
+### 第五步：初始化 SDK
 
 ```dart
 import 'dart:async';
@@ -61,7 +153,8 @@ Future<void> initAlignApps({
   await AlignappsFlutter.initialize(
     AlignappsConfig(
       appKey: 'YOUR_APP_KEY',
-      serverUrl: 'https://attribution.example.com',
+      // 第三步准备的主域，用于真正的上报。
+      serverUrl: 'https://app.roadhouse.vezu.cc',
       metaAnonId: metaAnonId,
       initialConsent: const AlignappsConsent(
         analytics: true,
@@ -94,52 +187,9 @@ Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
 }
 ```
 
-> `serverUrl` 直接填你自己的域名（或 CNAME / 反代地址）即可，**不需要任何构建参数**；每个商户用各自域名，生产不要共用同一个测试域名。上面的 `attribution.example.com` 只是占位。
+> `serverUrl` 填第三步准备的主域（真正的上报地址）；如果只做 Android，可以直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
 
 > 默认总是采集 `anon_id`：投不投 Meta 会变，采集本身没有副作用，这样不用为了开关反复发版。接入方只调 `initAlignApps()` 即可。
-
-## Android 额外配置
-
-环境：`compileSdk = 36`、`minSdk >= 23`、JDK 17。
-
-权限已由插件自动合并，无需手动添加。调试：`adb logcat -s AlignApps`。
-
-## iOS 额外配置（Info.plist）
-
-```xml
-<key>NSUserTrackingUsageDescription</key>
-<string>此标识用于广告归因和投放效果分析。</string>
-
-<key>SKAdNetworkItems</key>
-<array>
-  <dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict> <!-- Google -->
-  <dict><key>SKAdNetworkIdentifier</key><string>v9wttpbfk9.skadnetwork</string></dict> <!-- Meta -->
-</array>
-
-<key>CFBundleURLTypes</key>
-<array>
-  <dict>
-    <key>CFBundleURLSchemes</key>
-    <array><string>fb[APP_ID]</string></array>
-  </dict>
-</array>
-<key>FacebookAppID</key>
-<string>[APP_ID]</string>
-<key>FacebookClientToken</key>
-<string>[CLIENT_TOKEN]</string>
-<key>FacebookDisplayName</key>
-<string>[APP_NAME]</string>
-```
-
-- `[APP_ID]`、`[CLIENT_TOKEN]` 在 Meta for Developers 后台获取。
-- Google ODM 已由插件自动集成，**无需额外操作**。
-
-## iOS 隐私清单（必须）
-
-1. 复制 `ios/PrivacyInfo.host-app.xcprivacy.template` 到你的 `ios/Runner/PrivacyInfo.xcprivacy`（若已有 App 级隐私清单，把 `NSPrivacyTrackingDomains` 合并进去）。
-2. 在 Xcode 中把该文件加入 App target 的 **Copy Bundle Resources**。
-3. 将 `__ALIGNAPPS_TRACKING_DOMAIN__` 替换为你 `serverUrl` 的域名（你自己的域名 / CNAME），例如 `sdk.yourgame.com`。
-4. 域名需与 `AlignappsConfig.serverUrl` 的 host 一致；生产环境使用自己的域名。
 
 ## 把 installId 传给业务服务端
 
@@ -151,6 +201,13 @@ final installId = await AlignappsFlutter.getInstallId();
 ```
 
 > 客户端不需要调用 `track` / `trackPurchase`；安装事件由 SDK 初始化时自动上报。
+
+## 从 0.4.x 升级到 0.5.0
+
+1. 把 `ref` 改成 `v0.5.0`（或你实际发布的分支/commit）。
+2. 执行 `flutter pub get`；如果 `pubspec.lock` 仍锁定旧 commit，执行 `flutter pub upgrade alignapps_flutter`。
+3. 按第三步创建 `ios/Flutter/AlignappsPrivacyDomain.txt`。
+4. 重新 `pod install`。缺少该文件时 iOS 构建会失败（这是有意设计）。
 
 ## 常见问题
 

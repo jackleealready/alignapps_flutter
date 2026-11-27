@@ -1,0 +1,3 @@
+# Dedicated AlignApps attribution host for this app.
+# Must match the host of AlignappsConfig.serverUrl.
+attribution.example.com

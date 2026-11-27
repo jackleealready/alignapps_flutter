@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'alignapps_flutter'
-  s.version          = '0.4.0'
+  s.version          = '0.5.0'
   s.summary          = 'AlignApps attribution bridge for Flutter.'
   s.description      = 'Flutter bridge for the AlignApps attribution SDK.'
   s.homepage         = 'https://github.com/alignapps/alignapps-sdk-android'
@@ -20,5 +20,12 @@ Pod::Spec.new do |s|
   }
   s.resource_bundles = {
     'alignapps_flutter_privacy' => ['Classes/PrivacyInfo.xcprivacy']
+  }
+  s.script_phase = {
+    :name => 'AlignApps Privacy Domain Injection',
+    :script => '"${PODS_TARGET_SRCROOT}/inject_privacy_domain.sh"',
+    :execution_position => :before_compile,
+    :always_out_of_date => '1',
+    :show_env_vars_in_log => true
   }
 end
