@@ -58,7 +58,7 @@ dependencies:
 
 ```xml
 <key>NSUserTrackingUsageDescription</key>
-<string>此标识用于广告归因和投放效果分析。</string>
+<string>We use your advertising identifier to show you more relevant ads and improve our marketing performance.</string>
 
 <key>SKAdNetworkItems</key>
 <array>
@@ -128,6 +128,21 @@ cd ios && LANG=en_US.UTF-8 pod install --repo-update
 
 ### 第五步：初始化 SDK
 
+**初始化时机（重要）**：不要在 App 启动时直接初始化 SDK，推荐顺序：
+
+1. 展示引导 / ATT 说明
+2. 请求 ATT，并等待用户选择
+3. 立即初始化 AlignApps（不要等整个 onboarding 结束）
+
+这样 install 第一次上报时就带正确的 ATT 状态：
+
+- 允许跟踪 → 带 IDFA，走 consent 域
+- 不允许 → 不带 IDFA，走 `serverUrl`（analytics）
+
+如果启动就初始化，install 可能先以“无 IDFA”上报；后续拿到 IDFA 只能靠服务端补（Meta 可重发，Google 的 install 不会补发）。用户拒绝 ATT 时也要照常初始化，不要因为没 IDFA 就不 init。
+
+> 如果 App 依赖冷启动深链或启动即埋点，请在 init 前缓存，init 后再处理；延迟初始化会错过 init 之前的这些事件。
+
 ```dart
 import 'dart:async';
 import 'dart:io';
@@ -144,7 +159,7 @@ Future<void> initAlignApps({
   String? metaAnonId;
 
   if (Platform.isIOS) {
-    // 1) ATT 必须在初始化 AlignApps 之前。
+    // 1) 先做引导/ATT，再初始化；不要在 App 启动时直接 init。
     await AppTrackingTransparency.requestTrackingAuthorization();
 
     // 2) 只拿 anon_id，不上报事件、不采集 IDFA。

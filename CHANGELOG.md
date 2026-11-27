@@ -7,6 +7,7 @@
 - iOS: 缺少归因域名时构建直接失败，避免打出 tracking=true 但没有 domains 的不合规包。
 - iOS: 宿主准备 2 个独立域名：`analytics.` 用作 `serverUrl`（实际上报），`consent.` 写入 `AlignappsPrivacyDomain.txt`（隐私清单的 tracking 域）；都不能用于业务。
 - 文档：重写「iOS 隐私清单」为两个域名的接入方式；`PrivacyInfo.host-app.xcprivacy.template` 改为仅用于宿主自身追踪。
+- 文档：初始化步骤要求宿主在引导/ATT 返回后再初始化 SDK，避免 install 先以无 IDFA 上报。
 
 ## 0.4.0 - 2026-11-27
 
