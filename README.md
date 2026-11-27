@@ -29,7 +29,7 @@ AlignApps 归因 SDK 的 Flutter 桥接插件，支持 Android 与 iOS。
 
 - Android Studio / Gradle；`compileSdk = 36`、`minSdk >= 23`、JDK 17。
 - Android 应用包名和签名。
-- 不需要额外归因域名或隐私清单；`serverUrl` 可直接用 SDK 默认域名 `https://alignapps.win4me.vip`，或你自己的归因反代域名。
+- 不需要额外归因域名或隐私清单；`serverUrl` 用 `analytics.example.com`（`example` 换成你的根域名），和 iOS 相同。
 - Google ODM 由插件自动集成，无需额外准备。
 
 ## 接入流程
@@ -109,7 +109,7 @@ consent.example.com
 
 构建时脚本会把 consent 域注入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy` 的 `NSPrivacyTrackingDomains`。`serverUrl` 仍然用 analytics 域，SDK 实际上报走 analytics；consent 只用于隐私清单声明。缺少该文件时 iOS 构建会直接失败。
 
-> Android 跳过这一步；如果只做 Android，第五步的 `serverUrl` 直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
+> Android 跳过这一步；第五步的 `serverUrl` 同样用 `analytics.example.com`（`example` 换成你的根域名），不需要 consent 域。
 
 ### 第四步：安装依赖
 
@@ -188,7 +188,7 @@ Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
 }
 ```
 
-> `serverUrl` 填 `analytics.example.com`（`example` 换成你的根域名，真正的上报地址）；如果只做 Android，可以直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
+> `serverUrl` 填 `analytics.example.com`（`example` 换成你的根域名，真正的上报地址），iOS 和 Android 都用这个域。
 >
 > `ios/Flutter/AlignappsPrivacyDomain.txt` 里的 `consent.example.com` 只用于隐私清单，不要填到 `serverUrl`。
 
