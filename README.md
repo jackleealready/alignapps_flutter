@@ -152,10 +152,6 @@ final installId = await AlignappsFlutter.getInstallId();
 
 > 客户端不需要调用 `track` / `trackPurchase`；安装事件由 SDK 初始化时自动上报。
 
-## SKAN（iOS，自动）
-
-安装时的 SKAN 转化值由 SDK 自动更新（`install = 1 / low`），无需手动调用。
-
 ## 常见问题
 
 **Q：FacebookAppID 会变怎么办？**
