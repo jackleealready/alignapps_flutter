@@ -34,7 +34,7 @@ class _DemoPageState extends State<DemoPage> {
       final installId = await AlignappsFlutter.initialize(
         const AlignappsConfig(
           appKey: 'demo_app_key',
-          serverUrl: 'https://attribution.example.com',
+          serverUrl: 'https://analytics.example.com',
           logLevel: AlignappsLogLevel.debug,
           initialConsent: AlignappsConsent(
             analytics: true,

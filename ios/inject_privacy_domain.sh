@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Inject the host-provided attribution domain into the AlignApps SDK privacy
+# Inject the host-provided consent (tracking) domain into the AlignApps SDK privacy
 # manifest before the resource bundle is assembled.
 #
 # The domain can be provided in either of these ways (first match wins):
@@ -57,7 +57,7 @@ if [ -z "$DOMAIN" ]; then
 fi
 
 if [ -z "$DOMAIN" ]; then
-  fail "缺少归因域名。请在宿主 App 的 ios/Flutter/AlignappsPrivacyDomain.txt 写入（例如 trk.example.com），或设置 ALIGNAPPS_TRACKING_DOMAIN。"
+  fail "缺少 consent（跟踪）域名。请在宿主 App 的 ios/Flutter/AlignappsPrivacyDomain.txt 写入（例如 consent.example.com），或设置 ALIGNAPPS_TRACKING_DOMAIN。"
 fi
 
 DOMAIN="$(printf '%s' "$DOMAIN" | tr '[:upper:]' '[:lower:]')"
@@ -67,12 +67,12 @@ DOMAIN="${DOMAIN%%/*}"
 
 case "$DOMAIN" in
   *" "*|*:*)
-    fail "归因域名格式不合法：$DOMAIN。只填写 host，例如 trk.example.com。"
+    fail "consent 域名格式不合法：$DOMAIN。只填写 host，例如 consent.example.com。"
     ;;
 esac
 
 if ! printf '%s' "$DOMAIN" | grep -Eq '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'; then
-  fail "归因域名格式不合法：$DOMAIN。只填写 host，例如 trk.example.com。"
+  fail "consent 域名格式不合法：$DOMAIN。只填写 host，例如 consent.example.com。"
 fi
 
 [ -f "$TEMPLATE" ] || fail "找不到模板：$TEMPLATE"
@@ -114,7 +114,7 @@ else
   for bundle in "${BUILT_BUNDLES[@]}"; do
     target="$bundle/PrivacyInfo.xcprivacy"
     if [ -f "$target" ] && cmp -s "$TMP_FILE" "$target"; then
-      log "已构建清单已包含归因域名 ${DOMAIN}：$target"
+      log "已构建清单已包含 consent 域名 ${DOMAIN}：$target"
     else
       cp "$TMP_FILE" "$target"
       log "已注入已构建清单：${DOMAIN} -> $target"

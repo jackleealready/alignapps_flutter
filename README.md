@@ -13,13 +13,14 @@ AlignApps 归因 SDK 的 Flutter 桥接插件，支持 Android 与 iOS。
 ### 通用
 
 - 在 AlignApps 后台创建应用，拿到 `appKey`。
-- 确定归因上报地址 `serverUrl`。
+- 确定上报地址 `serverUrl`，例如 `analytics.example.com`（`example` 换成你的根域名）。
 
 ### iOS
 
 - Xcode + CocoaPods；最低 iOS 14.5。
-- **2 个独立归因域名**（主/备，例如 `app.yourdomain.com`、`in.yourdomain.com`），都代理到 SDK 默认域名 `alignapps.win4me.vip`，且不能用于业务。
-- 确定主归因域名，第三步会写入 `ios/Flutter/AlignappsPrivacyDomain.txt`。
+- 准备 2 个独立域名，都代理到 SDK 默认域名 `alignapps.win4me.vip`，且都不能用于业务：
+  - `analytics.example.com`：主归因域，用作 `serverUrl`（实际上报）
+  - `consent.example.com`：ATT 审核关联域，第三步写入 `ios/Flutter/AlignappsPrivacyDomain.txt`
 - 准备 `Info.plist` 配置：ATT 说明、SKAdNetwork、Meta URL Scheme。
 - 如果用 Meta：Meta App ID、Client Token（Meta for Developers 后台获取）。
 - App Store Connect 的 App 记录和隐私信息（上架时用）。
@@ -93,20 +94,18 @@ dependencies:
 
 准备 **2 个独立域名**，都代理到 SDK 默认域名（例如 `alignapps.win4me.vip`），且**都不能用于业务**：
 
-- 主域：`app.<你的域名>`，例如 `app.roadhouse.vezu.cc`
-- 备域：`in.<你的域名>`，例如 `in.roadhouse.vezu.cc`
+- `analytics.<你的根域名>`，例如 `analytics.example.com`：主归因域，用作 `serverUrl`
+- `consent.<你的根域名>`，例如 `consent.example.com`：ATT 审核关联域，写入隐私清单
 
-前缀可参考 Adjust。两个域名都不能和业务 API 同域。
-
-创建 `ios/Flutter/AlignappsPrivacyDomain.txt`，写入主域（只写 host）：
+创建 `ios/Flutter/AlignappsPrivacyDomain.txt`，写入 **consent 域**（只写 host）：
 
 ```text
-app.roadhouse.vezu.cc
+consent.example.com
 ```
 
-也可以设置 `ALIGNAPPS_TRACKING_DOMAIN=app.roadhouse.vezu.cc`。
+也可以设置 `ALIGNAPPS_TRACKING_DOMAIN=consent.example.com`。
 
-构建时脚本会自动把主域注入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy`，不需要手写 App 隐私清单。缺少该文件时 iOS 构建会直接失败。
+构建时脚本会把 consent 域注入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy` 的 `NSPrivacyTrackingDomains`。`serverUrl` 仍然用 analytics 域，SDK 实际上报走 analytics；consent 只用于隐私清单声明。缺少该文件时 iOS 构建会直接失败。
 
 > Android 跳过这一步；如果只做 Android，第五步的 `serverUrl` 直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
 
@@ -153,8 +152,8 @@ Future<void> initAlignApps({
   await AlignappsFlutter.initialize(
     AlignappsConfig(
       appKey: 'YOUR_APP_KEY',
-      // 第三步准备的主域，用于真正的上报。
-      serverUrl: 'https://app.roadhouse.vezu.cc',
+      // 主归因域（analytics），用于真正的上报。
+      serverUrl: 'https://analytics.example.com',
       metaAnonId: metaAnonId,
       initialConsent: const AlignappsConsent(
         analytics: true,
@@ -187,7 +186,9 @@ Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
 }
 ```
 
-> `serverUrl` 填第三步准备的主域（真正的上报地址）；如果只做 Android，可以直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
+> `serverUrl` 填 `analytics.example.com`（`example` 换成你的根域名，真正的上报地址）；如果只做 Android，可以直接填 SDK 默认域名（如 `https://alignapps.win4me.vip`）。
+>
+> `ios/Flutter/AlignappsPrivacyDomain.txt` 里的 `consent.example.com` 只用于隐私清单，不要填到 `serverUrl`。
 
 > 默认总是采集 `anon_id`：投不投 Meta 会变，采集本身没有副作用，这样不用为了开关反复发版。接入方只调 `initAlignApps()` 即可。
 
@@ -206,7 +207,7 @@ final installId = await AlignappsFlutter.getInstallId();
 
 1. 把 `ref` 改成 `v0.5.0`（或你实际发布的分支/commit）。
 2. 执行 `flutter pub get`；如果 `pubspec.lock` 仍锁定旧 commit，执行 `flutter pub upgrade alignapps_flutter`。
-3. 按第三步创建 `ios/Flutter/AlignappsPrivacyDomain.txt`。
+3. 按第三步创建 `ios/Flutter/AlignappsPrivacyDomain.txt`（写 consent 域）。
 4. 重新 `pod install`。缺少该文件时 iOS 构建会失败（这是有意设计）。
 
 ## 常见问题
