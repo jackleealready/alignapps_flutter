@@ -107,7 +107,12 @@ consent.example.com
 
 也可以设置 `ALIGNAPPS_TRACKING_DOMAIN=consent.example.com`。
 
-构建时脚本会把 consent 域注入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy` 的 `NSPrivacyTrackingDomains`。`serverUrl` 仍然用 analytics 域，SDK 实际上报走 analytics；consent 只用于隐私清单声明。缺少该文件时 iOS 构建会直接失败。
+构建时脚本会把 consent 域注入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy` 的 `NSPrivacyTrackingDomains`。运行时 SDK 从这份清单读取 consent 域：
+
+- ATT 已授权且 `advertisingId=true` → 上报走 consent 域
+- 其他情况 → 上报走 `serverUrl`（analytics 域）
+
+这样拒绝 ATT 的用户不会走 consent 域，避免被系统断网。缺少该文件时 iOS 构建会直接失败。
 
 > Android 跳过这一步；第五步的 `serverUrl` 同样用 `analytics.example.com`（`example` 换成你的根域名），不需要 consent 域。
 
@@ -190,7 +195,7 @@ Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
 
 > `serverUrl` 填 `analytics.example.com`（`example` 换成你的根域名，真正的上报地址），iOS 和 Android 都用这个域。
 >
-> `ios/Flutter/AlignappsPrivacyDomain.txt` 里的 `consent.example.com` 只用于隐私清单，不要填到 `serverUrl`。
+> `ios/Flutter/AlignappsPrivacyDomain.txt` 里的 `consent.example.com` 是 iOS 的 consent 域：ATT 已授权且 `advertisingId=true` 时 SDK 会从隐私清单读取它并走这个域；其他情况走 `serverUrl`。不要把它填到 `serverUrl`，Android 也不会用它。
 
 > 默认总是采集 `anon_id`：投不投 Meta 会变，采集本身没有副作用，这样不用为了开关反复发版。接入方只调 `initAlignApps()` 即可。
 

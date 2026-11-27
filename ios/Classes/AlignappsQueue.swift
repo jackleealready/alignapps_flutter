@@ -78,12 +78,17 @@ final class AlignappsUploader {
         self.session = URLSession(configuration: configuration)
     }
 
-    func upload(events: [[String: Any]], installId: String, completion: @escaping (AlignappsUploadResult) -> Void) {
+    func upload(
+        events: [[String: Any]],
+        installId: String,
+        baseUrl: String,
+        completion: @escaping (AlignappsUploadResult) -> Void
+    ) {
         guard !events.isEmpty else {
             completion(.success(0))
             return
         }
-        guard let url = URL(string: config.serverUrl + "/api/v1/sdk/events") else {
+        guard let url = URL(string: baseUrl + "/api/v1/sdk/events") else {
             completion(.permanent("Invalid serverUrl"))
             return
         }
@@ -135,9 +140,10 @@ final class AlignappsUploader {
         idfv: String?,
         attStatus: String?,
         lat: Bool?,
-        metaAnonId: String?
+        metaAnonId: String?,
+        baseUrl: String
     ) {
-        guard let url = URL(string: config.serverUrl + "/api/v1/sdk/install-attributions/refresh") else {
+        guard let url = URL(string: baseUrl + "/api/v1/sdk/install-attributions/refresh") else {
             return
         }
         var payload: [String: Any] = [

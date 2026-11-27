@@ -31,6 +31,20 @@ final class AlignappsCore {
         }
     }
 
+    private var trackingAllowed: Bool {
+        storage.consent.advertisingId && AlignappsDevice.attStatus() == "authorized"
+    }
+
+    private func uploadBaseUrl() -> String {
+        let allowed = trackingAllowed
+        if allowed, let consentUrl = AlignappsPrivacy.consentBaseUrl() {
+            logger.debug("upload_base_url=\(consentUrl) tracking_allowed=true")
+            return consentUrl
+        }
+        logger.debug("upload_base_url=\(config.serverUrl) tracking_allowed=\(allowed)")
+        return config.serverUrl
+    }
+
     func start() -> String {
         lock.lock()
         defer { lock.unlock() }
@@ -77,6 +91,7 @@ final class AlignappsCore {
         skan.register()
         skan.update(eventName: "install")
         initialized = true
+        sanitizeIdfaIfNeeded()
         logger.info("AlignApps initialized installId=\(installId)")
         if config.enableOdm {
             var odmFlushed = false
@@ -165,18 +180,7 @@ final class AlignappsCore {
 
     func setConsent(_ consent: AlignappsConsent) {
         storage.consent = consent
-        if !consent.advertisingId {
-            let events = queue.all()
-            for event in events {
-                guard let eventId = event["event_id"] as? String else { continue }
-                queue.update(eventId: eventId) { item in
-                    if var device = item["device"] as? [String: Any] {
-                        device.removeValue(forKey: "idfa")
-                        item["device"] = device
-                    }
-                }
-            }
-        }
+        sanitizeIdfaIfNeeded()
         if consent.analytics {
             flush()
         }
@@ -230,7 +234,8 @@ final class AlignappsCore {
             idfv: nil,
             attStatus: nil,
             lat: nil,
-            metaAnonId: normalized
+            metaAnonId: normalized,
+            baseUrl: uploadBaseUrl()
         )
         flush()
     }
@@ -280,7 +285,11 @@ final class AlignappsCore {
             return
         }
         let batch = Array(events.prefix(50))
-        uploader.upload(events: batch, installId: storage.installId) { [weak self] result in
+        uploader.upload(
+            events: batch,
+            installId: storage.installId,
+            baseUrl: uploadBaseUrl()
+        ) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success:
@@ -344,6 +353,7 @@ final class AlignappsCore {
                 event["device"] = device
             }
         }
+        sanitizeIdfaIfNeeded()
         if storage.consent.analytics {
             uploader.refreshInstallDevice(
                 installId: storage.installId,
@@ -351,8 +361,23 @@ final class AlignappsCore {
                 idfv: device["idfv"] as? String,
                 attStatus: device["att_status"] as? String,
                 lat: device["lat"] as? Bool,
-                metaAnonId: storage.metaAnonId
+                metaAnonId: storage.metaAnonId,
+                baseUrl: uploadBaseUrl()
             )
+        }
+    }
+
+    private func sanitizeIdfaIfNeeded() {
+        guard !trackingAllowed else { return }
+        let events = queue.all()
+        for event in events {
+            guard let eventId = event["event_id"] as? String else { continue }
+            queue.update(eventId: eventId) { item in
+                if var device = item["device"] as? [String: Any] {
+                    device.removeValue(forKey: "idfa")
+                    item["device"] = device
+                }
+            }
         }
     }
 

@@ -3,6 +3,7 @@
 ## 0.5.0 - 2026-11-27
 
 - iOS: 隐私清单改为构建期自动注入。宿主在 `ios/Flutter/AlignappsPrivacyDomain.txt`（或 `ALIGNAPPS_TRACKING_DOMAIN`）提供独立归因域名，插件的 `ios/inject_privacy_domain.sh` 会把域名写入 `alignapps_flutter_privacy.bundle/PrivacyInfo.xcprivacy`。
+- iOS: 上报地址路由。ATT 已授权且 `advertisingId=true` 时，SDK 从隐私清单读取 consent 域并上报；其他情况走 `serverUrl`（analytics）；未授权时会清理队列中的 IDFA。
 - iOS: 缺少归因域名时构建直接失败，避免打出 tracking=true 但没有 domains 的不合规包。
 - iOS: 宿主准备 2 个独立域名：`analytics.` 用作 `serverUrl`（实际上报），`consent.` 写入 `AlignappsPrivacyDomain.txt`（隐私清单的 tracking 域）；都不能用于业务。
 - 文档：重写「iOS 隐私清单」为两个域名的接入方式；`PrivacyInfo.host-app.xcprivacy.template` 改为仅用于宿主自身追踪。
