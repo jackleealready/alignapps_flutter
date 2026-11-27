@@ -15,7 +15,7 @@ dependencies:
   alignapps_flutter:
     git:
       url: https://github.com/jackleealready/alignapps_flutter.git
-      ref: v0.3.2
+      ref: v0.4.0
   # 仅 iOS 用到（Android 不会调用，也不会初始化）
   app_tracking_transparency: ^2.0.7   # 请求 ATT
   facebook_app_events: ^0.34.0        # 只取 Meta anon_id
@@ -94,6 +94,8 @@ Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
 }
 ```
 
+> `serverUrl` 直接填你自己的域名（或 CNAME / 反代地址）即可，**不需要任何构建参数**；每个商户用各自域名，生产不要共用同一个测试域名。上面的 `attribution.example.com` 只是占位。
+
 > 默认总是采集 `anon_id`：投不投 Meta 会变，采集本身没有副作用，这样不用为了开关反复发版。接入方只调 `initAlignApps()` 即可。
 
 ## Android 额外配置
@@ -131,6 +133,13 @@ Future<void> _retryMetaAnonId(Duration interval, int maxRetries) async {
 
 - `[APP_ID]`、`[CLIENT_TOKEN]` 在 Meta for Developers 后台获取。
 - Google ODM 已由插件自动集成，**无需额外操作**。
+
+## iOS 隐私清单（必须）
+
+1. 复制 `ios/PrivacyInfo.host-app.xcprivacy.template` 到你的 `ios/Runner/PrivacyInfo.xcprivacy`（若已有 App 级隐私清单，把 `NSPrivacyTrackingDomains` 合并进去）。
+2. 在 Xcode 中把该文件加入 App target 的 **Copy Bundle Resources**。
+3. 将 `__ALIGNAPPS_TRACKING_DOMAIN__` 替换为你 `serverUrl` 的域名（你自己的域名 / CNAME），例如 `sdk.yourgame.com`。
+4. 域名需与 `AlignappsConfig.serverUrl` 的 host 一致；生产环境使用自己的域名。
 
 ## 把 installId 传给业务服务端
 

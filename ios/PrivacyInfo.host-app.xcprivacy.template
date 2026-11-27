@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      AlignApps host app privacy manifest.
+
+      1. Put this file in your iOS app target, e.g. ios/Runner/PrivacyInfo.xcprivacy.
+      2. Add it to the app target's "Copy Bundle Resources".
+      3. Replace __ALIGNAPPS_TRACKING_DOMAIN__ with the host of your
+         AlignappsConfig.serverUrl, e.g. sdk.yourgame.com
+    -->
+    <key>NSPrivacyTracking</key>
+    <true/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array>
+        <string>__ALIGNAPPS_TRACKING_DOMAIN__</string>
+    </array>
+</dict>
+</plist>

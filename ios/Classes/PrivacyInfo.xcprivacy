@@ -4,11 +4,9 @@
 <dict>
     <key>NSPrivacyTracking</key>
     <true/>
-    <key>NSPrivacyTrackingDomains</key>
-    <array>
-        <!-- If a custom serverUrl is used, add its domain to the host app Privacy Manifest as well. -->
-        <string>alignapps.win4me.vip</string>
-    </array>
+    <!-- NSPrivacyTrackingDomains is intentionally omitted: serverUrl is per merchant.
+         Each host app must declare its own tracking domain in the app-level manifest.
+         See ios/PrivacyInfo.host-app.xcprivacy.template. -->
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
         <dict>

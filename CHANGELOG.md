@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 - 2026-11-27
+
+- iOS: 隐私清单（`PrivacyInfo.xcprivacy`）不再内置固定追踪域名，宿主 App 需按模板声明自己的 `NSPrivacyTrackingDomains`（见 README「iOS 隐私清单」）。
+- iOS: 新增 `ios/PrivacyInfo.host-app.xcprivacy.template` 供宿主 App 使用。
+- 文档：更新 iOS 隐私清单接入步骤；初始化示例支持可选的 `--dart-define=ALIGNAPPS_SERVER_URL` / `ALIGNAPPS_APP_KEY` 注入。
+
 ## 0.3.2 - 2026-11-23
 
 - Flutter: 新增 `AlignappsConfig.metaAnonId` 与 `AlignappsFlutter.setMetaAnonId()`，用于把 Meta App Events SDK 的 `anon_id` 随事件上送（ATT 拒绝下的 Meta 匹配信号）。
