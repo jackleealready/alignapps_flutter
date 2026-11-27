@@ -63,7 +63,8 @@ dependencies:
 <key>SKAdNetworkItems</key>
 <array>
   <dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict> <!-- Google -->
-  <dict><key>SKAdNetworkIdentifier</key><string>v9wttpbfk9.skadnetwork</string></dict> <!-- Meta -->
+  <dict><key>SKAdNetworkIdentifier</key><string>v9wttpbfk9.skadnetwork</string></dict> <!-- Meta / Facebook -->
+  <dict><key>SKAdNetworkIdentifier</key><string>n38lu8286q.skadnetwork</string></dict> <!-- Meta / Instagram -->
 </array>
 
 <key>CFBundleURLTypes</key>
@@ -83,6 +84,7 @@ dependencies:
 
 - `[APP_ID]`、`[CLIENT_TOKEN]` 在 Meta for Developers 后台获取。
 - Google ODM 已由插件自动集成，无需额外操作。
+- 上面的 SKAdNetwork 只是 Google/Meta 的最小示例：Google 用 `cstr6suwn9`；Meta 至少需要 Facebook `v9wttpbfk9` + Instagram `n38lu8286q`。不是固定列表，投哪些平台就加入对应平台的完整列表；使用聚合/中介时还要加各中介平台的 ID。
 
 #### Android
 
